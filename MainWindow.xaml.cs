@@ -33,11 +33,9 @@ namespace PacManGame
         int score = 0; // score keeping integer
 
 
-
         public MainWindow()
         {
             InitializeComponent();
-
             GameSetUp(); // run the game set up function
         }
 
@@ -120,38 +118,50 @@ namespace PacManGame
             ImageBrush pinkGhost = new ImageBrush();
             pinkGhost.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/pink.jpg"));
             pinkGuy.Fill = pinkGhost;
-
-
         }
 
         private void GameLoop(object sender, EventArgs e)
         {
-
             // this is the game loop event, this event will control all of the movements, outcome, collision and score for the game
 
             txtScore.Text = "Score: " + score; // show the scoreo to the txtscore label. 
 
             // start moving the character in the movement directions
+            double canvasWidth = MyCanvas.ActualWidth;
+            double canvasHeight = MyCanvas.ActualHeight;
+
 
             if (goRight)
             {
-                // if go right boolean is true then move pac man to the right direction by adding the speed to the left 
-                Canvas.SetLeft(pacman, Canvas.GetLeft(pacman) + speed);
+                double newPos = Canvas.GetLeft(pacman) + speed;
+                if (newPos + pacman.Width <= canvasWidth) // Ensure Pac-Man doesn't move out of the right boundary
+                {
+                    Canvas.SetLeft(pacman, newPos);
+                }
             }
             if (goLeft)
             {
-                // if go left boolean is then move pac man to the left direction by deducting the speed from the left
-                Canvas.SetLeft(pacman, Canvas.GetLeft(pacman) - speed);
+                double newPos = Canvas.GetLeft(pacman) - speed;
+                if (newPos >= 0) // Ensure Pac-Man doesn't move out of the left boundary
+                {
+                    Canvas.SetLeft(pacman, newPos);
+                }
             }
             if (goUp)
             {
-                // if go up boolean is true then deduct the speed integer from the top position of the pac man
-                Canvas.SetTop(pacman, Canvas.GetTop(pacman) - speed);
+                double newPos = Canvas.GetTop(pacman) - speed;
+                if (newPos >= 0) // Ensure Pac-Man doesn't move out of the top boundary
+                {
+                    Canvas.SetTop(pacman, newPos);
+                }
             }
             if (goDown)
             {
-                // if go down boolean is true then add speed integer value to the pac man top position
-                Canvas.SetTop(pacman, Canvas.GetTop(pacman) + speed);
+                double newPos = Canvas.GetTop(pacman) + speed;
+                if (newPos + pacman.Height <= canvasHeight) // Ensure Pac-Man doesn't move out of the bottom boundary
+                {
+                    Canvas.SetTop(pacman, newPos);
+                }
             }
             // end the movement 
 
@@ -234,7 +244,6 @@ namespace PacManGame
                     {
                         // set the coin visiblity to hidden
                         x.Visibility = Visibility.Hidden;
-                        // add 1 to the score
                         score++;
                     }
 
@@ -248,6 +257,7 @@ namespace PacManGame
                     {
                         // if collision has happened, then end the game by calling the game over function and passing in the message
                         GameOver("Ghosts got you, click ok to play again");
+                        return;
                     }
 
                     // if there is a rectangle called orange guy in the game
@@ -295,14 +305,47 @@ namespace PacManGame
             // inside the game over function we passing in a string to show the final message to the game
             gameTimer.Stop(); // stop the game timer
             MessageBox.Show(message, "The Pac Man Game WPF MOO ICT"); // show a mesage box with the message that is passed in this function
-
-            // when the player clicks ok on the message box
-            // restart the application
-            System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
-            Application.Current.Shutdown();
+            ResetGame();
         }
 
+        private void ResetGame()
+        {
+            // Reset score
+            score = 0;
+
+            txtScore.Text = "Score: " + score;
+            // Reset Pac-Man's position
+            Canvas.SetLeft(pacman, 50); // Initial X position
+            Canvas.SetTop(pacman, 104); // Initial Y position
+
+            // Reset ghost positions
+            Canvas.SetLeft(redGuy, 173);
+            Canvas.SetTop(redGuy, 29);
+            Canvas.SetLeft(orangeGuy, 651);
+            Canvas.SetTop(orangeGuy, 104);
+            Canvas.SetLeft(pinkGuy, 173);
+            Canvas.SetTop(pinkGuy, 404);
+
+            // Reset all coins to visible
+            foreach (var coin in MyCanvas.Children.OfType<Rectangle>())
+            {
+                if ((string)coin.Tag == "coin")
+                {
+                    coin.Visibility = Visibility.Visible;
+                }
+            }
+
+            // Reset movement booleans
+            goLeft = goRight = goUp = goDown = false;
+            noLeft = noRight = noUp = noDown = false;
+
+            // Reset ghost movement step and speed
+            currentGhostStep = ghostMoveStep;
+            ghostSpeed = 10; // Reset the initial ghost speed
 
 
+            // Restart the game timer
+            gameTimer.Start();
+        }
     }
 }
